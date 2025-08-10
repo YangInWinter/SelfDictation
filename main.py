@@ -18,7 +18,7 @@ class WordList:
         if not (word in self.words): # 如果单词表中存在该单词，则只更改单词的释义
             self.words.append(word)
         self.trans[word] = meaning
-        
+
     def remove_word(self, item):
         """
         移除单词，及其对应的翻译。\n
@@ -36,13 +36,13 @@ class WordList:
                 self.words.remove(item)
         except Exception as error:
             print(f"不存在该项目，详细错误信息如下：{str(error)}")
-    
+
 # 类：命令
 class Commands():
     def __init__(self):
         self.cmd = {}
         self.wordlist = WordList()
-    
+
     def parse(self, cmd):
         """
         解析命令，以字典的形式返回结果。\n
@@ -65,18 +65,19 @@ class Commands():
                 else:
                     res[option_name] += ' ' + str(content)
         return res
-    
+
     def add(self):
         """ 增添单词。 """
+        # 遍历输入单词
         while True:
             content = input(f"{len(self.wordlist.words)+1}. ")
             if content == '':
                 break
-            # 判断是否输入了单词的释义，用“:”分隔单词和释义
-            if ':' in content: 
+            # 判断是否输入了单词的释义，用“:”或“：”(全半角都行)分隔单词和释义
+            if (':' in content) or ('：' in content): 
                 try:
-                    word = format(incise(content, ':', 'b'))
-                    meaning = format(incise(content, ':', 'f'))
+                    word = format(incise(content, ':' if (':' in content) else '：', 'b'))
+                    meaning = format(incise(content, ':' if (':' in content) else '：', 'f'))
                     self.wordlist.add_word(word, meaning)
                 except Exception as error:
                     print(f"错误：{str(error)}")
@@ -117,7 +118,7 @@ class Commands():
                     content = input()
                     if content == '': # 显示下一个
                         break
-                    elif content == "?": # 如果输入是“?”就给提示
+                    elif (content == "?") or (content == "？"): # 如果输入是“?”就给提示
                         print(f"前{hints}个字母是：{word[:hints]}") # 给出提示
                         hints += 1
                     elif format(content) == word: # 输入（可选）完全正确的情况
@@ -140,7 +141,7 @@ class Commands():
                     content = input()
                     if content == '': # 显示下一个
                         break
-                    elif content == "?": # 如果输入是“?”就给提示
+                    elif (content == "?") or (content == "？"): # 如果输入是“?”就给提示
                         print(f"前{hints}个字是：{trans[:hints]}") # 给出提示
                         hints += 1
                     elif format(content) == trans: # 输入（可选）完全正确的情况
@@ -155,7 +156,7 @@ class Commands():
 
     def export(self, filepath=""):
         """
-        导出为文件，“-p”为路径选项（可选），包含路径和文件名。\n
+        导出为文件，包含路径和文件名。\n
         参数：\n
         filepath：（可选）文件保存的地址（包含文件名）。如果留空，则使用默认保存方式。
         """
@@ -211,42 +212,45 @@ class Commands():
         参数：\n
         typed：命令的内容（原封不动）。
         """
+
+        # 必须考虑输入为空的情况，否则会报错退出
+        if typed == '':
+            return None
+
         # 解析typed（输入的内容）
         self.cmd = self.parse(typed)
 
         # 增添单词列表
         if self.cmd["cmd"] == "add":
             self.add()
-        
+
         # 移除单词项
         elif self.cmd["cmd"] == "rm":
             self.remove(self.cmd["-param"])
-                
+
         # 显示单词列表
         elif self.cmd["cmd"] == "ls":
             self.showlist()
 
         # 测试（显示释义）
-        elif typed == "test -s":
+        elif typed == "tst -s":
             self.test("-s")
-        
+
         # 测试（显示单词）
-        elif typed == "test -t":
+        elif typed == "tst -t":
             self.test("-t")
 
-        # 导出为文件，“-p”为路径选项（可选），包含路径和文件名
-        elif self.cmd["cmd"] == "export":
-            if "-p" in self.cmd:
-                self.export(self.cmd["-p"])
+        # 导出为文件，包含路径和文件名
+        elif self.cmd["cmd"] == "exp":
+            if "-param" in self.cmd:
+                self.export(self.cmd["-param"])
             else:
                 self.export()
 
-        # 导入文件，“-p”为路径选项，包含路径和文件名
-        elif self.cmd["cmd"] == "import":
-            if "-p" in self.cmd:
-                self.import_data(self.cmd["-p"])
-            else:
-                print("错误：缺少路径参数“-p”！")
+        # 导入文件，包含路径和文件名
+        elif self.cmd["cmd"] == "imp":
+            self.import_data(self.cmd["-param"])
+
         # 退出程序
         elif self.cmd["cmd"] == "exit":
             # 询问是否保存当前单词表
@@ -296,11 +300,9 @@ def is_convertible_to_int(content):
         return True
     except ValueError:
         return False
-    
 
 
 
-# while False:
 if __name__ == "__main__":
     # 创建实例
     cmd = Commands()
@@ -313,4 +315,3 @@ if __name__ == "__main__":
         # 使用cmd
         cmd.run(typed)
 
-        
