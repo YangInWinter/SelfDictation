@@ -1,6 +1,7 @@
 import os
 import json
 from datetime import datetime
+from os.path import getsize
 
 # 类：单词列表
 class WordList:
@@ -174,7 +175,7 @@ class Commands():
                 json.dump(self.wordlist.trans, file, ensure_ascii=False, indent=4)
             print(f"文件已保存在：{os.path.abspath(filepath)}")
         except Exception as error: # 出错情况
-            if not os.path.exists(filepath): # 判断最可能的原因：目录不存在
+            if not os.path.exists(os.path.dirname(filepath)): # 判断最可能的原因：目录不存在
                 print(f"目录不存在！错误：{error}")
                 option = input("是否创建目录？（Y/n）") # 提醒是否创建父文件夹
                 option = option.lower()
@@ -205,6 +206,54 @@ class Commands():
             print(f"错误：文件 '{filepath}' 不是有效的JSON格式。")
         except Exception as error:
             print(f"处理文件时发生错误：{error}")
+
+    def save_dict(self, dictpath='./data/dict/default.json'):
+        """
+        存储(self.wordlist.trans)至词典(.json文件)。\n
+        参数：\n
+        dictpath：可选，默认路径为“./data/dict/default.json”，需包含路径和文件名。
+        """
+        odict = {} # Output Dictionary
+        try:
+            if not os.path.exists(os.path.dirname(dictpath)): # 判断目录是否存在
+                print("目录不存在！")
+                option = input("是否创建目录？（Y/n）") # 提醒是否创建父文件夹
+                option = option.lower()
+                if  (option == '') or ('y' in option) or (option == None):
+                    os.makedirs(os.path.dirname(dictpath), exist_ok=True)
+
+            if os.path.exists(dictpath) and os.path.getsize(dictpath) > 0:
+                with open(dictpath, 'r', encoding='utf-8') as dictfile:
+                    odict = json.load(dictfile)
+                with open(dictpath,'w', encoding="utf-8") as file:
+                    odict.update(self.wordlist.trans)
+                    json.dump(odict, file, ensure_ascii=False, indent=4)
+                    print(f"文件已保存在：{os.path.abspath(dictpath)}")
+            else:
+                with open(dictpath,'w', encoding="utf-8") as file:
+                    odict = self.wordlist.trans
+                    json.dump(odict, file, ensure_ascii=False, indent=4)
+                    print(f"文件已保存在：{os.path.abspath(dictpath)}")
+
+        except Exception as error:
+            raise RuntimeError(f"保存为词典时发生错误：{error}")
+
+    def load_dict(self, dictpath='./data/dict/default.json'):
+        """
+        加载词典至:self.wordlist.trans\n
+        参数：\n
+        dictpath：可选，默认为“./data/dict/default.json”，需包含路径和文件名。
+        """
+        try:
+            with open(dictpath, 'r', encoding='utf-8') as dictfile:
+                self.wordlist.trans = json.load(dictfile)
+            print("已加载词典。")
+        except FileNotFoundError as error:
+            raise FileNotFoundError(f"文件不存在！详细信息：{error}")
+        except Exception as error:
+            raise RuntimeError(f"加载词典时发生错误：{error}")
+
+
 
     def run(self, typed):
         """
@@ -250,6 +299,30 @@ class Commands():
         # 导入文件，包含路径和文件名
         elif self.cmd["cmd"] == "imp":
             self.import_data(self.cmd["-param"])
+
+        # 保存词典。“-p”为可选项，用于指定路径；不选择“-p”，直接写参数的，以参数为文件名保存至“./data/dict/”；不写参数的，直接保存至“./data/dict/default.json”
+        elif self.cmd["cmd"] == "save":
+            try:
+                if "-p" in self.cmd:
+                    self.save_dict(self.cmd["-p"])
+                elif "-param" in self.cmd:
+                    self.save_dict(f"./data/dict/{self.cmd["-param"]}.json")
+                else:
+                    self.save_dict()
+            except Exception as error:
+                print(error)
+
+        # 载入词典。“-p”为可选项，用于指定路径；不选择“-p”，直接写参数的，以参数为文件名从“./data/dict/”寻找；不写参数的，直接从“./data/dict/default.json”加载
+        elif self.cmd["cmd"] == "load":
+            try:
+                if "-p" in self.cmd:
+                    self.load_dict(self.cmd["-p"])
+                elif "-param" in self.cmd:
+                    self.load_dict(f"./data/dict/{self.cmd["-param"]}.json")
+                else:
+                    self.load_dict()
+            except Exception as error:
+                print(error)
 
         # 退出程序
         elif self.cmd["cmd"] == "exit":
