@@ -222,6 +222,7 @@ class Commands():
                 if  (option == '') or ('y' in option) or (option == None):
                     os.makedirs(os.path.dirname(dictpath), exist_ok=True)
 
+            # 判断文件是否存在且不为空
             if os.path.exists(dictpath) and os.path.getsize(dictpath) > 0:
                 with open(dictpath, 'r', encoding='utf-8') as dictfile:
                     odict = json.load(dictfile)
@@ -245,6 +246,13 @@ class Commands():
         dictpath：可选，默认为“./data/dict/default.json”，需包含路径和文件名。
         """
         try:
+            # 询问是否保存当前单词表
+            if not not self.wordlist.trans: # 判断单词表是否为空
+                option = input("是否保存当前单词表？（Y/n）")
+                option = option.lower()
+                if (option == '') or ('y' in option) or (option == None):
+                    self.export(input("保存目录（留空则选择默认目录）："))
+
             with open(dictpath, 'r', encoding='utf-8') as dictfile:
                 self.wordlist.trans = json.load(dictfile)
             print("已加载词典。")
